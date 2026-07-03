@@ -4,7 +4,7 @@ GDPR (English ↔ Nederlands/AVG) and the EU AI Act (English ↔ Nederlands) sid
 
 **Live demo:** https://george-drg.github.io/eu-legal-viewer/ <!-- enable GitHub Pages, see below -->
 
-![screenshot](docs/screenshot.png) <!-- TODO: add docs/screenshot.png -->
+![screenshot](screenshot.png) <!-- TODO: add docs/screenshot.png -->
 
 ## Coverage
 
