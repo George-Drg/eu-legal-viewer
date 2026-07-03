@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EU Legal Bilingual Viewer · GDPR / AI Act</title>
+<style>
+  :root {
+    --bg: #faf8f3;
+    --bg-paper: #ffffff;
+    --text: #1a1a1a;
+    --text-muted: #6b6356;
+    --border: #d8d2c4;
+    --border-strong: #1a1a1a;
+    --accent: #8b1e1e;
+    --accent-soft: #f4ddc8;
+    --highlight: #fff3a8;
+    --highlight-strong: #ffdf4a;
+    --sidebar-bg: #f0ebdd;
+    --code: #f7f3e8;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    font-size: 16px;
+  }
+  /* Top bar */
+  .topbar {
+    background: var(--border-strong);
+    color: #fff;
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    border-bottom: 3px solid var(--accent);
+  }
+  .topbar h1 {
+    font-size: 18px;
+    font-weight: normal;
+    letter-spacing: 0.04em;
+  }
+  .doc-switch { display: flex; gap: 4px; margin-left: auto; }
+  .doc-switch button {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 6px 14px;
+    font-family: inherit;
+    cursor: pointer;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+  .doc-switch button:hover { background: #333; }
+  .doc-switch button.active {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  /* Layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    min-height: calc(100vh - 51px);
+  }
+  
+  /* Sidebar */
+  aside {
+    background: var(--sidebar-bg);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    height: calc(100vh - 51px);
+    position: sticky;
+    top: 51px;
+  }
+  aside .side-inner { padding: 20px 16px; }
+  aside .side-section { margin-bottom: 24px; }
+  aside .side-section h3 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  aside ul { list-style: none; }
+  aside li { margin: 1px 0; }
+  aside a {
+    display: block;
+    padding: 5px 10px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 13px;
+    border-radius: 3px;
+    line-height: 1.35;
+    transition: background 0.1s;
+  }
+  aside a:hover { background: rgba(139, 30, 30, 0.08); }
+  aside a.chapter-link {
+    font-weight: bold;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-top: 8px;
+  }
+  aside a.article-link { padding-left: 18px; }
+  aside a.recital-link { padding-left: 10px; font-size: 12px; color: var(--text-muted); }
+  
+  /* Main */
+  main {
+    overflow-y: auto;
+    height: calc(100vh - 51px);
+    background: var(--bg);
+  }
+  .main-inner {
+    max-width: 1500px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+  }
+  
+  /* Doc header (front page style) */
+  .doc-header {
+    border-bottom: 3px double var(--border-strong);
+    padding-bottom: 24px;
+    margin-bottom: 32px;
+  }
+  .doc-header .doc-title {
+    font-size: 28px;
+    line-height: 1.3;
+    margin-bottom: 8px;
+    font-weight: normal;
+  }
+  .doc-header .doc-subtitle {
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 16px;
+  }
+  .doc-header .doc-meta {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  
+  /* Front page / TOC */
+  .toc-section { margin-bottom: 40px; }
+  .toc-section h2 {
+    font-size: 18px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+  }
+  .toc-chapter { margin-bottom: 20px; }
+  .toc-chapter-title {
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .toc-articles {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 4px 16px;
+    padding-left: 16px;
+  }
+  .toc-articles a {
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    padding: 2px 0;
+  }
+  .toc-articles a:hover { color: var(--accent); text-decoration: underline; }
+  .toc-articles a .num { color: var(--accent); margin-right: 6px; font-variant-numeric: tabular-nums; }
+  .toc-recitals {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+    gap: 4px;
+    padding-left: 16px;
+  }
+  .toc-recitals a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 13px;
+    text-align: center;
+    padding: 4px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+  }
+  .toc-recitals a:hover { background: var(--accent-soft); border-color: var(--border); }
+  
+  /* Article rendering */
+  .chapter-divider {
+    margin: 48px 0 24px;
+    padding: 16px 0;
+    border-top: 3px double var(--border-strong);
+    border-bottom: 3px double var(--border-strong);
+    text-align: center;
+  }
+  .chapter-divider .ch-num {
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+  .chapter-divider .ch-title {
+    font-size: 22px;
+    margin-top: 6px;
+    font-weight: normal;
+  }
+  .chapter-divider .ch-title-nl {
+    font-size: 16px;
+    margin-top: 4px;
+    font-style: italic;
+    color: var(--text-muted);
+  }
+  
+  .section-divider {
+    margin: 32px 0 16px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .section-divider .sec-num {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .section-divider .sec-title {
+    font-size: 16px;
+    margin-top: 2px;
+    font-weight: bold;
+  }
+  
+  .article-block {
+    background: var(--bg-paper);
+    border: 1px solid var(--border);
+    margin-bottom: 28px;
+    border-radius: 2px;
+    scroll-margin-top: 16px;
+  }
+  .article-head {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--code);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+  }
+  .article-head .col h3 {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  .article-head .col .subtitle {
+    font-size: 14px;
+    font-style: italic;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  
+  .bilingual-body {
+    width: 100%;
+  }
+  .para-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .para-row .col {
+    padding: 0 20px;
+  }
+  .para-row .col.en {
+    border-right: 1px solid var(--border);
+  }
+  .para-row.labels-row .col {
+    padding: 16px 20px 0;
+  }
+  .para-row.content-row .col {
+    padding: 4px 20px;
+  }
+  .para-row.content-row:last-child .col {
+    padding-bottom: 16px;
+  }
+  .col-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    border-bottom: 1px dotted var(--border);
+    padding-bottom: 3px;
+  }
+  
+  /* Sync-able paragraphs */
+  .sync {
+    display: block;
+    padding: 4px 8px;
+    margin: 1px -8px;
+    border-radius: 2px;
+    transition: background 0.12s;
+    cursor: default;
+  }
+  .sync.is-highlight {
+    background: var(--highlight);
+  }
+  .sync.is-hover {
+    background: var(--highlight-strong);
+    box-shadow: inset 2px 0 0 var(--accent);
+  }
+  .sync .lid-num {
+    font-weight: bold;
+    margin-right: 6px;
+    color: var(--accent);
+  }
+  /* Sub-letter and sub-num inline items */
+  .sub-row .col {
+    padding-left: 40px !important;
+  }
+  .sub-inline {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 2px;
+  }
+  .sub-inline .sub-marker {
+    color: var(--accent);
+    font-weight: bold;
+    text-align: right;
+  }
+  .sub-inline.empty-sub {
+    display: block;
+    min-height: 4px;
+  }
+  .lid-block {
+    margin-bottom: 2px;
+  }
+  
+  /* Recital block */
+  .recital-block {
+    background: var(--bg-paper);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    margin-bottom: 16px;
+    border-radius: 2px;
+    scroll-margin-top: 16px;
+  }
+  .recital-block .rec-head {
+    padding: 6px 16px;
+    background: var(--code);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .recital-block .bilingual-body { font-size: 14.5px; }
+  
+  /* Search */
+  .search-box {
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 13px;
+    background: #fff;
+  }
+  
+  /* Info banner */
+  .banner {
+    background: var(--accent-soft);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    font-family: system-ui, sans-serif;
+  }
+  .banner code {
+    background: #fff;
+    padding: 2px 5px;
+    border-radius: 2px;
+    font-size: 12.5px;
+  }
+  
+  /* Hide section */
+  .hidden { display: none !important; }
+  
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  
+  /* Responsive */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { position: static; height: auto; }
+    .article-head { grid-template-columns: 1fr; }
+    .article-head .col.nl { margin-top: 8px; }
+    .para-row { grid-template-columns: 1fr; }
+    .para-row .col.en { border-right: none; border-bottom: 1px dashed var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>EU Legal Bilingual Viewer</h1>
+  <div class="doc-switch">
+    <button id="btn-gdpr" class="active" onclick="switchDoc('gdpr')">GDPR / AVG</button>
+    <button id="btn-aiact" onclick="switchDoc('aiact')">AI Act</button>
+  </div>
+</div>
+
+<div class="layout">
+  <aside>
+    <div class="side-inner">
+      <input class="search-box" type="search" id="search" placeholder="Search articles or recitals..." oninput="filterSidebar()">
+      <div class="side-section">
+        <h3>Navigation</h3>
+        <ul>
+          <li><a href="#top" onclick="goTop(event)">▲ Front page</a></li>
+        </ul>
+      </div>
+      <div class="side-section">
+        <h3>Chapters &amp; Articles</h3>
+        <ul id="nav-articles"></ul>
+      </div>
+      <div class="side-section">
+        <h3>Recitals</h3>
+        <ul id="nav-recitals"></ul>
+      </div>
+    </div>
+  </aside>
+
+  <main>
+    <div class="main-inner" id="content"></div>
+  </main>
+</div>
+
+<script src="data.js"></script>
+<script>
+  let currentDoc = 'gdpr';
+  
+  function switchDoc(doc) {
+    currentDoc = doc;
+    document.getElementById('btn-gdpr').classList.toggle('active', doc === 'gdpr');
+    document.getElementById('btn-aiact').classList.toggle('active', doc === 'aiact');
+    render();
+    document.querySelector('main').scrollTop = 0;
+  }
+  
+  function goTop(e) { e.preventDefault(); document.querySelector('main').scrollTop = 0; }
+  
+  function escapeHtml(s) {
+    if (!s) return '';
+    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  
+  function renderArticle(art) {
+    const paras = art.paragraphs || [];
+    let rows = '';
+    
+    // Column labels row
+    rows += `<div class="para-row labels-row">
+      <div class="col en"><div class="col-label">English</div></div>
+      <div class="col nl"><div class="col-label">Nederlands</div></div>
+    </div>`;
+    
+    for (let i = 0; i < paras.length; i++) {
+      const p = paras[i];
+      const enText = escapeHtml(p.en);
+      const nlText = escapeHtml(p.nl);
+      const enEmpty = !p.en || !p.en.trim();
+      const nlEmpty = !p.nl || !p.nl.trim();
+      
+      let enHtml = '', nlHtml = '', rowCls = 'para-row content-row';
+      
+      if (p.type === 'lid') {
+        enHtml = `<span class="sync lid-block" data-sync="${p.id}"><span class="lid-num">${p.lid_num}.</span>${enText}</span>`;
+        nlHtml = `<span class="sync lid-block" data-sync="${p.id}"><span class="lid-num">${p.lid_num}.</span>${nlText}</span>`;
+      } else if (p.type === 'sub-letter') {
+        rowCls += ' sub-row';
+        if (enEmpty) {
+          enHtml = `<span class="sync sub-inline empty-sub" data-sync="${p.id}"></span>`;
+        } else {
+          enHtml = `<span class="sync sub-inline" data-sync="${p.id}"><span class="sub-marker">(${p.letter})</span><span class="sub-text">${enText}</span></span>`;
+        }
+        if (nlEmpty) {
+          nlHtml = `<span class="sync sub-inline empty-sub" data-sync="${p.id}"></span>`;
+        } else {
+          nlHtml = `<span class="sync sub-inline" data-sync="${p.id}"><span class="sub-marker">${p.letter})</span><span class="sub-text">${nlText}</span></span>`;
+        }
+      } else if (p.type === 'sub-num') {
+        rowCls += ' sub-row';
+        const numLabel = p.num || '';
+        enHtml = `<span class="sync sub-inline" data-sync="${p.id}"><span class="sub-marker">(${numLabel})</span><span class="sub-text">${enText}</span></span>`;
+        nlHtml = `<span class="sync sub-inline" data-sync="${p.id}"><span class="sub-marker">${numLabel})</span><span class="sub-text">${nlText}</span></span>`;
+      } else {
+        enHtml = `<span class="sync" data-sync="${p.id}">${enText}</span>`;
+        nlHtml = `<span class="sync" data-sync="${p.id}">${nlText}</span>`;
+      }
+      
+      rows += `<div class="${rowCls}">
+        <div class="col en">${enHtml}</div>
+        <div class="col nl">${nlHtml}</div>
+      </div>`;
+    }
+    
+    return `
+      <div class="article-block" id="art-${art.num}">
+        <div class="article-head">
+          <div class="col en">
+            <h3>Article ${art.num}</h3>
+            <div class="subtitle">${escapeHtml(art.title_en || '')}</div>
+          </div>
+          <div class="col nl">
+            <h3>Artikel ${art.num}</h3>
+            <div class="subtitle">${escapeHtml(art.title_nl || '')}</div>
+          </div>
+        </div>
+        <div class="bilingual-body">${rows}</div>
+      </div>
+    `;
+  }
+  
+  function renderRecital(rec) {
+    return `
+      <div class="recital-block" id="rec-${rec.num}">
+        <div class="rec-head">Recital ${rec.num} · Overweging ${rec.num}</div>
+        <div class="bilingual-body">
+          <div class="para-row labels-row">
+            <div class="col en"><div class="col-label">English</div></div>
+            <div class="col nl"><div class="col-label">Nederlands</div></div>
+          </div>
+          <div class="para-row content-row">
+            <div class="col en">
+              <span class="sync" data-sync="rec-${rec.num}">${escapeHtml(rec.en)}</span>
+            </div>
+            <div class="col nl">
+              <span class="sync" data-sync="rec-${rec.num}">${escapeHtml(rec.nl)}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  function render() {
+    const doc = window.LEGAL_DATA[currentDoc];
+    if (!doc) {
+      document.getElementById('content').innerHTML = '<div class="empty-state">No data loaded for this document.</div>';
+      return;
+    }
+    
+    // Header + front page TOC
+    let html = '<a id="top"></a>';
+    html += `<div class="doc-header">
+      <h1 class="doc-title">${escapeHtml(doc.title_en)}</h1>
+      <div class="doc-subtitle">${escapeHtml(doc.title_nl)}</div>
+      <div class="doc-meta">${escapeHtml(doc.meta || '')}</div>
+    </div>`;
+    
+    // Banner for incomplete data
+    if (doc.partial) {
+      html += `<div class="banner">
+        <strong>Partial dataset.</strong> Run <code>parse_eurlex.py</code> to populate the full text from EUR-Lex. See README.md.
+      </div>`;
+    }
+    
+    // Front page TOC
+    html += '<div class="toc-section"><h2>Contents · Inhoud</h2>';
+    (doc.chapters || []).forEach(ch => {
+      html += `<div class="toc-chapter">
+        <div class="toc-chapter-title">Chapter ${ch.num} · ${escapeHtml(ch.title_en)} <span style="font-weight:normal;font-style:italic;color:var(--text-muted)">/ ${escapeHtml(ch.title_nl)}</span></div>
+        <div class="toc-articles">
+          ${(ch.articles || []).map(a => `<a href="#art-${a.num}"><span class="num">Art. ${a.num}</span>${escapeHtml(a.title_en)}</a>`).join('')}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+    
+    // Recitals TOC
+    if (doc.recitals && doc.recitals.length) {
+      html += '<div class="toc-section"><h2>Recitals · Overwegingen</h2><div class="toc-recitals">';
+      doc.recitals.forEach(r => {
+        html += `<a href="#rec-${r.num}">(${r.num})</a>`;
+      });
+      html += '</div></div>';
+    }
+    
+    // Recitals content
+    if (doc.recitals && doc.recitals.length) {
+      html += '<div class="chapter-divider"><div class="ch-num">Preamble</div><div class="ch-title">Recitals</div><div class="ch-title-nl">Overwegingen</div></div>';
+      doc.recitals.forEach(r => { html += renderRecital(r); });
+    }
+    
+    // Articles by chapter
+    (doc.chapters || []).forEach(ch => {
+      html += `<div class="chapter-divider">
+        <div class="ch-num">Chapter ${ch.num}</div>
+        <div class="ch-title">${escapeHtml(ch.title_en)}</div>
+        <div class="ch-title-nl">${escapeHtml(ch.title_nl)}</div>
+      </div>`;
+      (ch.sections || []).forEach(sec => {
+        html += `<div class="section-divider"><div class="sec-num">Section ${sec.num}</div><div class="sec-title">${escapeHtml(sec.title_en)}</div></div>`;
+        (sec.articles || []).forEach(art => { html += renderArticle(art); });
+      });
+      (ch.articles || []).forEach(art => { html += renderArticle(art); });
+    });
+    
+    document.getElementById('content').innerHTML = html;
+    buildSidebar(doc);
+    attachSyncHandlers();
+  }
+  
+  function buildSidebar(doc) {
+    let artHtml = '';
+    (doc.chapters || []).forEach(ch => {
+      artHtml += `<li><a class="chapter-link" href="#art-${(ch.articles && ch.articles[0]) ? ch.articles[0].num : ((ch.sections && ch.sections[0] && ch.sections[0].articles && ch.sections[0].articles[0]) ? ch.sections[0].articles[0].num : '')}">Ch. ${ch.num} · ${escapeHtml(ch.title_en)}</a></li>`;
+      const allArts = [];
+      (ch.articles || []).forEach(a => allArts.push(a));
+      (ch.sections || []).forEach(s => (s.articles || []).forEach(a => allArts.push(a)));
+      allArts.forEach(a => {
+        artHtml += `<li><a class="article-link" href="#art-${a.num}">Art. ${a.num} · ${escapeHtml(a.title_en)}</a></li>`;
+      });
+    });
+    document.getElementById('nav-articles').innerHTML = artHtml;
+    
+    let recHtml = '';
+    (doc.recitals || []).forEach(r => {
+      recHtml += `<li><a class="recital-link" href="#rec-${r.num}">(${r.num}) ${escapeHtml((r.en || '').slice(0, 50))}${r.en && r.en.length > 50 ? '...' : ''}</a></li>`;
+    });
+    document.getElementById('nav-recitals').innerHTML = recHtml;
+  }
+  
+  function attachSyncHandlers() {
+    document.querySelectorAll('.sync').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        const id = el.dataset.sync;
+        document.querySelectorAll(`[data-sync="${id}"]`).forEach(m => {
+          if (m === el) m.classList.add('is-hover');
+          else m.classList.add('is-highlight');
+        });
+      });
+      el.addEventListener('mouseleave', () => {
+        const id = el.dataset.sync;
+        document.querySelectorAll(`[data-sync="${id}"]`).forEach(m => {
+          m.classList.remove('is-highlight', 'is-hover');
+        });
+      });
+    });
+  }
+  
+  function filterSidebar() {
+    const q = document.getElementById('search').value.toLowerCase();
+    document.querySelectorAll('aside a').forEach(a => {
+      if (!q) { a.style.display = ''; return; }
+      a.style.display = a.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  }
+  
+  // Smooth scroll for sidebar links
+  document.addEventListener('click', e => {
+    const a = e.target.closest('aside a, .toc-articles a, .toc-recitals a');
+    if (!a) return;
+    const href = a.getAttribute('href');
+    if (href && href.startsWith('#')) {
+      e.preventDefault();
+      const target = document.querySelector(href);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  });
+  
+  render();
+</script>
+</body>
+</html>
