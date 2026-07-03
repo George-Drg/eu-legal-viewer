@@ -1,0 +1,11 @@
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+__pycache__/
+gdpr_en.html
+gdpr_nl.html
+aiact_en.html
+aiact_nl.html
+debug*.py
+debug*.html
